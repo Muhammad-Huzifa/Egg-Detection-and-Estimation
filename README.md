@@ -3,8 +3,8 @@
 Real-time egg detection and size estimation using AI.
 
 ## 👥 Team
-- [Your Name](linkedin-url)
-- [Muhammad Abbas](linkedin-url)
+- [Muhammad Huzifa](www.linkedin.com/in/muhammad-huzifa3202)
+- [Muhammad Abbas](https://www.linkedin.com/in/muhammad-abbas-b93524279/)
 
 ## ✨ Features
 - 🎥 Real-time video detection
@@ -13,4 +13,3 @@ Real-time egg detection and size estimation using AI.
 - 📏 Size estimation (mm)
 - 📊 S/M/L/XL classification
 - 💾 Save annotated images# Egg-Detection-and-Estimation
-# Egg-Detection-and-Estimation
