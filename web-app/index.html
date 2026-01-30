@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Egg Detector</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#fff;min-height:100vh}.container{max-width:700px;margin:0 auto;padding:15px}h1{text-align:center;padding:20px;font-size:24px}#startBtn{display:block;width:100%;max-width:300px;margin:20px auto;padding:16px;font-size:18px;background:#4ecca3;color:#1a1a2e;border:none;border-radius:30px;cursor:pointer}#loading{display:none;text-align:center;padding:40px}.spinner{width:50px;height:50px;border:4px solid rgba(78,204,163,0.2);border-top-color:#4ecca3;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 15px}@keyframes spin{to{transform:rotate(360deg)}}#videoContainer{display:none;position:relative;border-radius:15px;overflow:hidden}#video{width:100%;display:block}#canvas{position:absolute;top:0;left:0;width:100%;height:100%}#capturedContainer{display:none;position:relative;border-radius:15px;overflow:hidden}#capturedImage{width:100%;display:block;border-radius:15px}#capturedCanvas{position:absolute;top:0;left:0;width:100%;height:100%}.controls{display:none;justify-content:center;gap:15px;margin-top:15px;flex-wrap:wrap}.ctrl-btn{padding:12px 24px;font-size:14px;font-weight:600;border:none;border-radius:25px;cursor:pointer;display:flex;align-items:center;gap:8px}.capture-btn{background:#f44336;color:#fff}.switch-btn{background:#2196f3;color:#fff}.save-btn{background:#4caf50;color:#fff}.back-btn{background:#ff9800;color:#fff}.mode-indicator{text-align:center;padding:10px;margin-bottom:10px;border-radius:10px;font-size:14px;font-weight:600}.mode-video{background:rgba(76,175,80,0.2);color:#4caf50}.mode-photo{background:rgba(33,150,243,0.2);color:#2196f3}#stats{display:none;background:rgba(22,33,62,0.95);border-radius:15px;padding:20px;margin-top:15px}.header{display:flex;justify-content:space-between;align-items:center;padding-bottom:15px;border-bottom:1px solid rgba(255,255,255,0.1)}.count{font-size:48px;font-weight:700;color:#4ecca3}.time{background:rgba(78,204,163,0.2);padding:8px 15px;border-radius:20px;color:#4ecca3}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.box{background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;text-align:center;border:2px solid}.box span{display:block}.box .num{font-size:24px;font-weight:700}.box .lbl{font-size:11px;color:#888}.small{border-color:#ffeb3b}.small .num{color:#ffeb3b}.medium{border-color:#4caf50}.medium .num{color:#4caf50}.large{border-color:#2196f3}.large .num{color:#2196f3}.xlarge{border-color:#f44336}.xlarge .num{color:#f44336}.summary{background:rgba(78,204,163,0.1);border-radius:10px;padding:15px;margin-bottom:15px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center}.summary-grid .val{font-weight:600}.summary-grid .lbl{font-size:11px;color:#888}#list{max-height:200px;overflow-y:auto}.item{display:flex;justify-content:space-between;align-items:center;padding:10px;margin:5px 0;background:rgba(255,255,255,0.05);border-radius:8px;border-left:4px solid}.item.small{border-left-color:#ffeb3b}.item.medium{border-left-color:#4caf50}.item.large{border-left-color:#2196f3}.item.xlarge{border-left-color:#f44336}#uploadBtn{display:none;width:100%;max-width:300px;margin:10px auto;padding:14px;font-size:16px;background:#9c27b0;color:#fff;border:none;border-radius:25px;cursor:pointer}#fileInput{display:none}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🥚 Egg Detector</h1>
+        <button id="startBtn" onclick="start()">📷 Start Camera</button>
+        <button id="uploadBtn" onclick="document.getElementById('fileInput').click()">📁 Upload Image</button>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)">
+        <div id="loading"><div class="spinner"></div><p>Loading Model...</p></div>
+        <div id="modeIndicator" class="mode-indicator mode-video" style="display:none">🎥 Live Video Mode</div>
+        <div id="videoContainer"><video id="video" autoplay playsinline></video><canvas id="canvas"></canvas></div>
+        <div id="capturedContainer"><img id="capturedImage"><canvas id="capturedCanvas"></canvas></div>
+        <div class="controls" id="controls">
+            <button class="ctrl-btn capture-btn" id="captureBtn" onclick="capturePhoto()">📸 Capture</button>
+            <button class="ctrl-btn switch-btn" id="switchBtn" onclick="switchMode()">🔄 Switch Mode</button>
+            <button class="ctrl-btn save-btn" id="saveBtn" onclick="saveImage()" style="display:none">💾 Save</button>
+            <button class="ctrl-btn back-btn" id="backBtn" onclick="backToVideo()" style="display:none">↩️ Back</button>
+        </div>
+        <div id="stats">
+            <div class="header">
+                <div><span class="count" id="total">0</span><span style="color:#888">Eggs</span></div>
+                <div class="time"><span id="ms">0</span>ms</div>
+            </div>
+            <div class="grid">
+                <div class="box small"><span class="num" id="s">0</span><span class="lbl">Small</span></div>
+                <div class="box medium"><span class="num" id="m">0</span><span class="lbl">Medium</span></div>
+                <div class="box large"><span class="num" id="l">0</span><span class="lbl">Large</span></div>
+                <div class="box xlarge"><span class="num" id="xl">0</span><span class="lbl">X-Large</span></div>
+            </div>
+            <div class="summary">
+                <div class="summary-grid">
+                    <div><span class="val" id="min">--</span><span class="lbl">Min</span></div>
+                    <div><span class="val" id="max">--</span><span class="lbl">Max</span></div>
+                    <div><span class="val" id="avg">--</span><span class="lbl">Avg</span></div>
+                    <div><span class="val" id="rng">--</span><span class="lbl">Range</span></div>
+                </div>
+            </div>
+            <div id="list"></div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+roboflow
+ultralytics
+segment-anything
+opencv-python
+torch
+torchvision
+matplotlib
+numpy
