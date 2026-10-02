@@ -1,8 +1,5 @@
-roboflow
-ultralytics
-segment-anything
-opencv-python
-torch
-torchvision
-matplotlib
-numpy
+numpy>=1.26,<3
+ultralytics>=8.3,<9
+roboflow>=1.1,<2
+onnx>=1.16,<2
+onnxslim>=0.1,<1

@@ -1,25 +1,11 @@
+import argparse
+import shutil
 import os
-import cv2
-import torch
 import numpy as np
-import urllib.request
 from pathlib import Path
-from segment_anything import sam_model_registry, SamPredictor
 
-sam_checkpoint = "sam_vit_b_01ec64.pth"
-if not os.path.exists(sam_checkpoint):
-    print("Downloading SAM model...")
-    urllib.request.urlretrieve(
-        "https://dl.fbaipublicfiles.com/segment_anything/sam_vit_b_01ec64.pth",
-        sam_checkpoint
-    )
-
-device = "cuda" if torch.cuda.is_available() else "cpu"
-sam = sam_model_registry["vit_b"](checkpoint=sam_checkpoint)
-sam.to(device)
-predictor = SamPredictor(sam)
-
-def bbox_to_mask(image_path, label_path):
+def bbox_to_mask(image_path, label_path, predictor):
+    import cv2
     img = cv2.imread(str(image_path))
     if img is None:
         return False
@@ -69,8 +55,21 @@ def bbox_to_mask(image_path, label_path):
         return True
     return False
 
-def process_dataset(dataset_path):
-    dataset_path = Path(dataset_path)
+def process_dataset(dataset_path, output, checkpoint):
+    original = Path(dataset_path).resolve()
+    dataset_path = Path(output).resolve()
+    if not original.is_dir():
+        raise ValueError("Input dataset directory does not exist.")
+    if dataset_path.exists() or original == dataset_path or original in dataset_path.parents:
+        raise ValueError("Choose a new output directory outside the input dataset.")
+    if not Path(checkpoint).is_file():
+        raise ValueError("Download the SAM checkpoint and supply --checkpoint first.")
+    import torch
+    from segment_anything import sam_model_registry, SamPredictor
+    sam = sam_model_registry["vit_b"](checkpoint=str(checkpoint))
+    sam.to(device="cuda" if torch.cuda.is_available() else "cpu")
+    predictor = SamPredictor(sam)
+    shutil.copytree(original, dataset_path)
     for split in ['train', 'valid', 'test']:
         images_dir = dataset_path / split / 'images'
         labels_dir = dataset_path / split / 'labels'
@@ -80,10 +79,17 @@ def process_dataset(dataset_path):
         total = len(image_files)
         for idx, img_path in enumerate(image_files):
             label_path = labels_dir / f"{img_path.stem}.txt"
-            bbox_to_mask(img_path, label_path)
+            bbox_to_mask(img_path, label_path, predictor)
             print(f"{split}: {idx+1}/{total}")
 
+
+def main():
+    parser = argparse.ArgumentParser(description="Create segmentation labels in a new dataset copy using SAM.")
+    parser.add_argument("dataset", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--checkpoint", type=Path, required=True)
+    args = parser.parse_args()
+    process_dataset(args.dataset, args.output, args.checkpoint)
+
 if __name__ == "__main__":
-    import sys
-    dataset_path = sys.argv[1] if len(sys.argv) > 1 else "Eggs-dpy01-1"
-    process_dataset(dataset_path)
+    main()

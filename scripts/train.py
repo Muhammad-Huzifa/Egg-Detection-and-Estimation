@@ -1,26 +1,29 @@
-import torch
-from ultralytics import YOLO
+import argparse
+from pathlib import Path
 
 def train(dataset_path, epochs=100):
-    model = YOLO('yolov8n-seg.pt')
-    model.train(
-        data=f"{dataset_path}/data.yaml",
-        epochs=epochs,
-        imgsz=640,
-        batch=16,
-        patience=20,
-        project='runs',
-        name='egg_seg',
-        exist_ok=True,
-        device=0 if torch.cuda.is_available() else 'cpu'
-    )
-    model = YOLO('runs/egg_seg/weights/best.pt')
-    model.val()
-    model.export(format='onnx', imgsz=640, simplify=True)
-    print("Model exported: runs/egg_seg/weights/best.onnx")
+    import torch
+    from ultralytics import YOLO
+    root = Path(__file__).resolve().parents[1]
+    model = YOLO("yolov8n-seg.pt")
+    model.train(data=str(Path(dataset_path).resolve() / "data.yaml"), epochs=epochs, imgsz=640, batch=16, patience=20, project=str(root / "runs"), name="egg_seg", device=0 if torch.cuda.is_available() else "cpu")
+    best = Path(model.trainer.best)
+    trained = YOLO(str(best))
+    trained.val(data=str(Path(dataset_path).resolve() / "data.yaml"))
+    exported = trained.export(format="onnx", imgsz=640, simplify=True)
+    print("Best checkpoint:", best)
+    print("Exported model:", exported)
+
+def main():
+    parser = argparse.ArgumentParser(description="Train and export an egg segmentation model.")
+    parser.add_argument("dataset", type=Path)
+    parser.add_argument("--epochs", type=int, default=100)
+    args = parser.parse_args()
+    if not (args.dataset / "data.yaml").is_file():
+        parser.error("Dataset must contain data.yaml and segmentation labels.")
+    if args.epochs < 1:
+        parser.error("Epochs must be positive.")
+    train(args.dataset, args.epochs)
 
 if __name__ == "__main__":
-    import sys
-    dataset_path = sys.argv[1] if len(sys.argv) > 1 else "Eggs-dpy01-1"
-    epochs = int(sys.argv[2]) if len(sys.argv) > 2 else 100
-    train(dataset_path, epochs)
+    main()
