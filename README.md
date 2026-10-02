@@ -7,8 +7,8 @@ The interface supports camera frames, photo capture, image upload, and annotated
 ## Run the browser application
 
 ```bash
-git clone https://github.com/Muhammad-Huzifa/Egg-Detection-and-Estimation.git
-cd Egg-Detection-and-Estimation
+git clone https://github.com/Muhammad-Huzifa/egg-detection-and-estimation.git
+cd egg-detection-and-estimation
 python -m http.server 8000 --directory web-app
 ```
 
